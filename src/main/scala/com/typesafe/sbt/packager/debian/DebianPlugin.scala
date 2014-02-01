@@ -57,6 +57,15 @@ trait DebianPlugin extends Plugin with linux.LinuxPlugin {
   }
 
 
+  private[this] def createFileIfRequired(script: File, perms: LinuxFileMetaData): File = {
+    if (!script.exists()) {
+      script.createNewFile()
+      chmod(script, perms.permissions)
+    }
+    script
+  }
+
+
   private[this] def scriptMapping(scriptName: String)(script: Option[File], controlDir: File): Seq[(File, String)] = {
     (script, controlDir) match {
       // check if user defined script exists
@@ -172,8 +181,8 @@ trait DebianPlugin extends Plugin with linux.LinuxPlugin {
           } groupBy (_._1) foreach {
             case ((user, group), pathList) =>
               streams.log info ("Altering postrm/postinst files to add user " + user + " and group " + group)
-              val postinst = t / Names.Debian / Names.Postinst
-              val postrm = t / Names.Debian / Names.Postrm
+              val postinst = createFileIfRequired(t / Names.Debian / Names.Postinst, LinuxFileMetaData())
+              val postrm = createFileIfRequired(t / Names.Debian / Names.Postrm, LinuxFileMetaData())
 
               val replacements = Seq("group" -> group, "user" -> user)
 
